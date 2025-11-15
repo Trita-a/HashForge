@@ -125,24 +125,27 @@ class TitleBar(QWidget):  # pragma: no cover - UI behaviour
         self.setObjectName("TitleBar")
 
         layout = QHBoxLayout(self)
-        layout.setContentsMargins(18, 6, 12, 6)
+        layout.setContentsMargins(24, 6, 12, 6)
         layout.setSpacing(10)
 
         self._icon_label = QLabel()
         self._icon_label.setObjectName("TitleBarIcon")
-        self._icon_label.setFixedSize(20, 20)
+        self._icon_label.setFixedSize(22, 22)
         self._icon_label.setScaledContents(True)
-        layout.addWidget(self._icon_label)
+        layout.addWidget(self._icon_label, alignment=Qt.AlignVCenter)
 
         self._title_label = QLabel(window.windowTitle())
+        font = self._title_label.font()
+        font.setPointSizeF(font.pointSizeF() + 1)
+        self._title_label.setFont(font)
         self._title_label.setObjectName("TitleBarText")
-        layout.addWidget(self._title_label)
+        layout.addWidget(self._title_label, alignment=Qt.AlignVCenter)
         self.set_icon(icon)
 
         if menu_bar is not None:
             menu_bar.setNativeMenuBar(False)
             menu_bar.setObjectName("TopMenuBar")
-            layout.addWidget(menu_bar)
+            layout.addWidget(menu_bar, alignment=Qt.AlignVCenter)
 
         layout.addStretch()
 
@@ -685,13 +688,21 @@ class MainWindow(QMainWindow):
 
         self.copy_btn = QPushButton("Copia hash")
         self.export_btn = QPushButton("Esporta CSV")
+        self.export_txt_btn = QPushButton("Esporta TXT")
         self.clear_results_btn = QPushButton("Pulisci risultati")
         self._set_button_variant(self.copy_btn, "primary")
         self._set_button_variant(self.export_btn, "primary")
+        self._set_button_variant(self.export_txt_btn, "primary")
         self._set_button_variant(self.clear_results_btn, "danger")
-        self._result_action_buttons = (self.copy_btn, self.export_btn, self.clear_results_btn)
+        self._result_action_buttons = (
+            self.copy_btn,
+            self.export_btn,
+            self.export_txt_btn,
+            self.clear_results_btn,
+        )
         title_row.addWidget(self.copy_btn)
         title_row.addWidget(self.export_btn)
+        title_row.addWidget(self.export_txt_btn)
         title_row.addWidget(self.clear_results_btn)
         layout.addLayout(title_row)
 
@@ -769,6 +780,7 @@ class MainWindow(QMainWindow):
         self.stop_btn.clicked.connect(self._stop_hashing)
         self.copy_btn.clicked.connect(self._copy_selected_hash)
         self.export_btn.clicked.connect(self._export_csv)
+        self.export_txt_btn.clicked.connect(self._export_txt)
         self.clear_results_btn.clicked.connect(self._clear_results)
         self.targets_list.filesDropped.connect(self._append_targets)
 
@@ -1021,6 +1033,42 @@ class MainWindow(QMainWindow):
             for result in self._results:
                 writer.writerow(result.as_row())
         self.statusBar().showMessage(f"Salvati {len(self._results)} hash", 5000)
+
+    def _export_txt(self) -> None:
+        if not self._results:
+            QMessageBox.information(self, APP_NAME, "Nessun risultato da esportare")
+            return
+        path, _ = QFileDialog.getSaveFileName(
+            self,
+            "Salva risultati",
+            "hashes.txt",
+            "Testo (*.txt);;Tutti i file (*.*)",
+        )
+        if not path:
+            return
+        entries: list[str] = []
+        for result in self._results:
+            name, file_path, algorithm, digest, size_text, modified = result.as_row()
+            entries.append(
+                "\n".join(
+                    (
+                        f"Nome: {name}",
+                        f"Percorso: {file_path}",
+                        f"Algoritmo: {algorithm}",
+                        f"Hash: {digest}",
+                        f"Dimensione: {size_text}",
+                        f"Modificato: {modified}",
+                    )
+                )
+            )
+        separator = "\n" + ("-" * 64) + "\n\n"
+        with open(path, "w", encoding="utf-8") as handle:
+            handle.write("Hash Forge - Risultati esportati\n")
+            handle.write(f"Totale elementi: {len(self._results)}\n")
+            handle.write("=" * 64 + "\n\n")
+            handle.write(separator.join(entries))
+            handle.write("\n")
+        self.statusBar().showMessage(f"Esportati {len(self._results)} hash in TXT", 5000)
 
     def _clear_results(self) -> None:
         self._results.clear()
