@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net472</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <UseWindowsForms>true</UseWindowsForms>
+    <ApplicationIcon>icon.ico</ApplicationIcon>
+    <AssemblyName>HashForge</AssemblyName>
+    <RootNamespace>HashForge</RootNamespace>
+    <Authors>William Tritapepe</Authors>
+    <Company>William Tritapepe</Company>
+    <Copyright>Copyright © 2025 William Tritapepe</Copyright>
+    <Version>1.0.0</Version>
+    <Description>Utility per calcolo e validazione di hash (MD5, SHA, ecc.).</Description>
+    <BaseOutputPath>..\Artifacts\bin\</BaseOutputPath>
+    <BaseIntermediateOutputPath>..\Artifacts\obj\</BaseIntermediateOutputPath>
+  </PropertyGroup>
+
+
+  <ItemGroup>
+    <EmbeddedResource Include="MainWindow.xaml" />
+    <Resource Include="icon.ico" />
+    <Resource Include="icon.png" />
+  </ItemGroup>
+
+</Project>
