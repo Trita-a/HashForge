@@ -19,14 +19,16 @@ using System.Windows.Markup;
 
 namespace HashForge
 {
-    // Simple Settings Manager
+    // Gestore Impostazioni Semplice
     public class AppSettings
     {
         public string DefaultAlgorithm { get; set; }
+        public bool IsDarkTheme { get; set; } // Nuova proprietà per il tema
         
         public AppSettings()
         {
             DefaultAlgorithm = "SHA256";
+            IsDarkTheme = true; // Tema scuro di default
         }
     }
 
@@ -42,10 +44,17 @@ namespace HashForge
                 {
                     var json = File.ReadAllText(SettingsPath);
                     var settings = new AppSettings();
+                    
+                    // Carica algoritmo
                     if (json.Contains("\"DefaultAlgorithm\": \"MD5\"")) settings.DefaultAlgorithm = "MD5";
                     else if (json.Contains("\"DefaultAlgorithm\": \"SHA1\"")) settings.DefaultAlgorithm = "SHA1";
                     else if (json.Contains("\"DefaultAlgorithm\": \"SHA512\"")) settings.DefaultAlgorithm = "SHA512";
                     else settings.DefaultAlgorithm = "SHA256";
+                    
+                    // Carica tema
+                    if (json.Contains("\"IsDarkTheme\": false")) settings.IsDarkTheme = false;
+                    else settings.IsDarkTheme = true; // Default scuro
+                    
                     return settings;
                 }
             }
@@ -60,7 +69,10 @@ namespace HashForge
                 var dir = System.IO.Path.GetDirectoryName(SettingsPath);
                 if (!Directory.Exists(dir)) Directory.CreateDirectory(dir);
                 
-                string json = string.Format("{{ \"DefaultAlgorithm\": \"{0}\" }}", settings.DefaultAlgorithm);
+                // Salva anche il tema
+                string json = string.Format("{{ \"DefaultAlgorithm\": \"{0}\", \"IsDarkTheme\": {1} }}", 
+                    settings.DefaultAlgorithm, 
+                    settings.IsDarkTheme.ToString().ToLower());
                 File.WriteAllText(SettingsPath, json);
             }
             catch { }
@@ -148,23 +160,28 @@ namespace HashForge
         private DataGrid ResultsGrid;
         private StackPanel StatsPanel;
         private TextBlock StatusBarText;
-        private TextBox ExpectedHashBox;
-        
-        // Window Controls
         private Button MinimizeBtn, MaximizeBtn, CloseBtn;
         private Button AddFileBtn, AddFolderBtn, ClearBtn, CopyBtn, ExportBtn, StopBtn;
-        
-        // Settings Controls
         private Button SettingsBtn, CloseSettingsBtn, ToggleContextBtn;
         private Grid SettingsOverlay;
         private ComboBox SettingsAlgoCombo;
         private TextBlock ContextStatusText;
+        // Hash List Controls
+        private Button ManageHashesBtn;
+        private Grid HashListOverlay;
+        private TextBox HashListInput;
+        private Button LoadHashFileBtn, ClearHashListBtn, CancelHashListBtn, SaveHashListBtn;
 
+        // Controllo Tema
+        private Button ThemeBtn;
+        private System.Windows.Shapes.Path ThemeIcon;
+        
         private ObservableCollection<HashResult> results;
         private bool isComputing = false;
-        private Dictionary<string, string> filePathMap = new Dictionary<string, string>(); // Maps display name to full path
+        private Dictionary<string, string> filePathMap = new Dictionary<string, string>();
         private CancellationTokenSource _cancellationTokenSource;
         private AppSettings _currentSettings;
+        private HashSet<string> _expectedHashes = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
         public MainWindow(string[] args)
         {
@@ -207,6 +224,9 @@ namespace HashForge
                     this.Resources.Add(res.Key, res.Value);
                 }
 
+                // Applica tema SUBITO dopo aver copiato le risorse, PRIMA che i controlli vengano renderizzati
+                ApplyTheme(_currentSettings.IsDarkTheme);
+
                 // Set Content
                 this.Content = loadedWindow.Content;
 
@@ -220,17 +240,10 @@ namespace HashForge
                 // Find Controls
                 FileList = (ListBox)loadedWindow.FindName("FileList");
                 AlgoCombo = (ComboBox)loadedWindow.FindName("AlgoCombo");
-                ExpectedHashBox = (TextBox)loadedWindow.FindName("ExpectedHashBox");
-                if (ExpectedHashBox != null)
+
+                if (ManageHashesBtn != null)
                 {
-                    ExpectedHashBox.TextChanged += (s, e) =>
-                    {
-                        if (ResultsGrid != null && ResultsGrid.Columns.Count > 4)
-                        {
-                            var statusCol = ResultsGrid.Columns[4]; // Status is the 5th column (index 4)
-                            statusCol.Visibility = string.IsNullOrWhiteSpace(ExpectedHashBox.Text) ? Visibility.Collapsed : Visibility.Visible;
-                        }
-                    };
+                    // Aggiorna lo stato del pulsante se necessario
                 }
                 ComputeBtn = (Button)loadedWindow.FindName("ComputeBtn");
                 Progress = (ProgressBar)loadedWindow.FindName("Progress");
@@ -262,6 +275,15 @@ namespace HashForge
                 ToggleContextBtn = (Button)loadedWindow.FindName("ToggleContextBtn");
                 SettingsAlgoCombo = (ComboBox)loadedWindow.FindName("SettingsAlgoCombo");
                 ContextStatusText = (TextBlock)loadedWindow.FindName("ContextStatusText");
+                
+                // Hash List Controls
+                ManageHashesBtn = (Button)loadedWindow.FindName("ManageHashesBtn");
+                HashListOverlay = (Grid)loadedWindow.FindName("HashListOverlay");
+                HashListInput = (TextBox)loadedWindow.FindName("HashListInput");
+                LoadHashFileBtn = (Button)loadedWindow.FindName("LoadHashFileBtn");
+                ClearHashListBtn = (Button)loadedWindow.FindName("ClearHashListBtn");
+                CancelHashListBtn = (Button)loadedWindow.FindName("CancelHashListBtn");
+                SaveHashListBtn = (Button)loadedWindow.FindName("SaveHashListBtn");
 
                 // Verify critical controls were found
                 if (StatFiles == null || StatData == null || StatSpeed == null || StatETA == null)
@@ -299,8 +321,13 @@ namespace HashForge
                 // Drag & Drop
                 FileList.Drop += FileList_Drop;
                 
-                // Apply Settings
+                // Applica Impostazioni
                 ApplySettings();
+                
+                // Controlli Tema
+                ThemeBtn = (Button)loadedWindow.FindName("ThemeBtn");
+                ThemeIcon = (System.Windows.Shapes.Path)loadedWindow.FindName("ThemeIcon");
+                if (ThemeBtn != null) ThemeBtn.Click += (s, e) => ToggleTheme();
                 
                 // Context Menu Wiring
                 var ctxMenu = this.Resources["RowContextMenu"] as ContextMenu;
@@ -327,6 +354,14 @@ namespace HashForge
                         if (File.Exists(arg)) AddFile(arg);
                     }
                 }
+                
+                // Eventi Overlay Lista Hash
+                ManageHashesBtn.Click += OpenHashList_Click;
+                CloseSettingsBtn.Click += (s, e) => SettingsOverlay.Visibility = Visibility.Collapsed;
+                CancelHashListBtn.Click += (s, e) => HashListOverlay.Visibility = Visibility.Collapsed;
+                SaveHashListBtn.Click += SaveHashList_Click;
+                ClearHashListBtn.Click += (s, e) => HashListInput.Text = "";
+                LoadHashFileBtn.Click += LoadHashFile_Click;
             }
             catch (Exception ex)
             {
@@ -397,18 +432,25 @@ namespace HashForge
             }
         }
 
+
+
         private void UpdateContextStatus()
         {
             bool isReg = IntegrationManager.IsRegistered();
             if (ToggleContextBtn != null)
             {
                 ToggleContextBtn.Content = isReg ? "Rimuovi dal Menu Contestuale" : "Aggiungi al Menu Contestuale";
-                ToggleContextBtn.Background = isReg ? (System.Windows.Media.Brush)new System.Windows.Media.BrushConverter().ConvertFrom("#ef4444") : (System.Windows.Media.Brush)new System.Windows.Media.BrushConverter().ConvertFrom("#334155");
+                ToggleContextBtn.Background = isReg ? 
+                    (SolidColorBrush)this.Resources["DangerBrush"] : 
+                    (SolidColorBrush)this.Resources["ControlBackgroundBrush"];
+                ToggleContextBtn.Foreground = (SolidColorBrush)this.Resources["TextBrush"];
             }
             if (ContextStatusText != null)
             {
                 ContextStatusText.Text = isReg ? "Attualmente integrato" : "Non integrato";
-                ContextStatusText.Foreground = isReg ? (System.Windows.Media.Brush)new System.Windows.Media.BrushConverter().ConvertFrom("#4ade80") : (System.Windows.Media.Brush)new System.Windows.Media.BrushConverter().ConvertFrom("#94a3b8");
+                ContextStatusText.Foreground = isReg ? 
+                    (SolidColorBrush)this.Resources["AccentBrush"] : 
+                    (SolidColorBrush)this.Resources["SecondaryTextBrush"];
             }
         }
 
@@ -423,6 +465,65 @@ namespace HashForge
                 IntegrationManager.Register();
             }
             UpdateContextStatus();
+        }
+
+        // Metodo per cambiare il tema
+        private void ToggleTheme()
+        {
+            _currentSettings.IsDarkTheme = !_currentSettings.IsDarkTheme;
+            ApplyTheme(_currentSettings.IsDarkTheme);
+            SettingsManager.Save(_currentSettings);
+        }
+
+        // Applica il tema (chiaro o scuro)
+        private void ApplyTheme(bool isDark)
+        {
+            if (isDark)
+            {
+                // Tema Scuro
+                this.Resources["BackgroundBrush"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#050b16"));
+                this.Resources["CardBrush"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#111a2b"));
+                this.Resources["TextBrush"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#f8fafc"));
+                this.Resources["SecondaryTextBrush"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#94a3b8"));
+                this.Resources["PrimaryBrush"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#00c2ff"));
+                this.Resources["AccentBrush"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#34e0a1"));
+                this.Resources["DangerBrush"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#ff7b00"));
+                this.Resources["ControlBackgroundBrush"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#1e293b"));
+                this.Resources["BorderBrush"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#33ffffff"));
+                this.Resources["HoverBrush"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#26ffffff"));
+                this.Resources["ButtonForegroundBrush"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#0f172a"));
+                this.Resources["WindowControlsBrush"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#cbd5e1"));
+                this.Resources["HeaderTextBrush"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#ffffff"));
+                
+                // Icona Luna (indica che siamo in tema scuro)
+                if (ThemeIcon != null)
+                {
+                    ThemeIcon.Data = Geometry.Parse("M17.75,4.09L15.22,6.03L16.13,9.09L13.5,7.28L10.87,9.09L11.78,6.03L9.25,4.09L12.44,4L13.5,1L14.56,4L17.75,4.09M21.25,11L19.61,12.25L20.2,14.23L18.5,13.06L16.8,14.23L17.39,12.25L15.75,11L17.81,10.95L18.5,9L19.19,10.95L21.25,11M18.97,15.95C19.8,15.87 20.69,17.05 20.16,17.8C19.84,18.25 19.5,18.67 19.08,19.07C15.17,23 8.84,23 4.94,19.07C1.03,15.17 1.03,8.83 4.94,4.93C5.34,4.53 5.76,4.17 6.21,3.85C6.96,3.32 8.14,4.21 8.06,5.04C7.79,7.9 8.75,10.87 10.95,13.06C13.14,15.26 16.1,16.22 18.97,15.95M17.33,17.97C14.5,17.81 11.7,16.64 9.53,14.5C7.36,12.31 6.2,9.5 6.04,6.68C3.23,9.82 3.34,14.64 6.35,17.66C9.37,20.67 14.19,20.78 17.33,17.97Z");
+                }
+            }
+            else
+            {
+                // Tema Chiaro
+                this.Resources["BackgroundBrush"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#f8fafc"));
+                this.Resources["CardBrush"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#ffffff"));
+                this.Resources["TextBrush"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#0f172a"));
+                this.Resources["SecondaryTextBrush"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#64748b"));
+                this.Resources["PrimaryBrush"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#0284c7"));
+                this.Resources["AccentBrush"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#059669"));
+                this.Resources["DangerBrush"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#ea580c"));
+                this.Resources["ControlBackgroundBrush"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#f1f5f9"));
+                this.Resources["BorderBrush"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#e2e8f0"));
+                this.Resources["HoverBrush"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#10000000"));
+                this.Resources["ButtonForegroundBrush"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#ffffff"));
+                this.Resources["WindowControlsBrush"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#475569")); // Slate 600 - più scuro per visibilità
+                this.Resources["HeaderTextBrush"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#0f172a")); // Slate 900 - scuro per leggibilità
+                
+                // Icona Sole (indica che siamo in tema chiaro)
+                if (ThemeIcon != null)
+                {
+                    ThemeIcon.Data = Geometry.Parse("M12,18A6,6 0 0,1 6,12A6,6 0 0,1 12,6A6,6 0 0,1 18,12A6,6 0 0,1 12,18M12,2A1,1 0 0,1 13,3V5A1,1 0 0,1 11,5V3A1,1 0 0,1 12,2M17,12A5,5 0 0,1 12,17A5,5 0 0,1 7,12A5,5 0 0,1 12,7A5,5 0 0,1 17,12M12.5,20.5L12.5,22.5L11.5,22.5L11.5,20.5L12.5,20.5M20.5,11.5V12.5H22.5V11.5H20.5M1.5,11.5V12.5H3.5V11.5H1.5M19.07,19.07L17.66,17.66L18.37,16.95L19.78,18.36L19.07,19.07M4.93,4.93L6.34,6.34L5.64,7.05L4.22,5.64L4.93,4.93M5.64,16.95L6.34,17.66L4.93,19.07L4.22,18.36L5.64,16.95M18.36,4.22L19.78,5.64L18.37,7.05L17.66,6.34L18.36,4.22Z");
+                }
+            }
         }
 
         private void AddFile(string file)
@@ -691,12 +792,11 @@ namespace HashForge
                                 
                                 // Check for match
                                 bool? matchStatus = null;
-                                string expectedHash = "";
-                                Dispatcher.Invoke(() => expectedHash = ExpectedHashBox.Text.Trim());
                                 
-                                if (!string.IsNullOrEmpty(expectedHash))
+                                // Se abbiamo una lista caricata, usiamo quella
+                                if (_expectedHashes != null && _expectedHashes.Count > 0)
                                 {
-                                    matchStatus = string.Equals(hash, expectedHash, StringComparison.OrdinalIgnoreCase);
+                                    matchStatus = _expectedHashes.Contains(hash);
                                 }
 
                                 // Final report for this file with result
@@ -813,6 +913,26 @@ namespace HashForge
             return string.Format("{0:0.##} {1}", len, sizes[order]);
         }
 
+        private string GetRelativePath(string fullPath, string basePath)
+        {
+            if (string.IsNullOrEmpty(basePath)) return System.IO.Path.GetFileName(fullPath);
+            
+            try
+            {
+                Uri pathUri = new Uri(fullPath);
+                // Append slash to base path to ensure it's treated as a directory
+                if (!basePath.EndsWith(System.IO.Path.DirectorySeparatorChar.ToString()))
+                    basePath += System.IO.Path.DirectorySeparatorChar;
+                    
+                Uri folderUri = new Uri(basePath);
+                return Uri.UnescapeDataString(folderUri.MakeRelativeUri(pathUri).ToString().Replace('/', System.IO.Path.DirectorySeparatorChar));
+            }
+            catch
+            {
+                return System.IO.Path.GetFileName(fullPath);
+            }
+        }
+
         // Context Menu Handlers
         private void CopyHash_Click(object sender, RoutedEventArgs e)
         {
@@ -860,32 +980,54 @@ namespace HashForge
                 return;
             }
 
-            var dlg = new SaveFileDialog { Filter = "Text File (*.txt)|*.txt", FileName = "hash_report.txt" };
+            var dlg = new SaveFileDialog 
+            { 
+                Filter = "Text File (*.txt)|*.txt|MD5 File (*.md5)|*.md5|SHA1 File (*.sha1)|*.sha1|SHA256 File (*.sha256)|*.sha256|All Files (*.*)|*.*",
+                FileName = "hash_report.txt" 
+            };
+
             if (dlg.ShowDialog() == true)
             {
                 try
                 {
                     var sb = new StringBuilder();
-                    sb.AppendLine("========================================");
-                    sb.AppendLine("           HASH FORGE REPORT            ");
-                    sb.AppendLine("========================================");
-                    sb.AppendLine("Data: " + DateTime.Now.ToString());
-                    sb.AppendLine("Totale File: " + results.Count);
-                    sb.AppendLine("========================================");
-                    sb.AppendLine("");
+                    string ext = System.IO.Path.GetExtension(dlg.FileName).ToLower();
+                    string exportDir = System.IO.Path.GetDirectoryName(dlg.FileName);
 
-                    foreach (var item in results)
+                    if (ext == ".txt")
                     {
-                        sb.AppendLine("File:       " + item.Name);
-                        sb.AppendLine("Percorso:   " + item.Path);
-                        sb.AppendLine("Algoritmo:  " + item.Algorithm);
-                        sb.AppendLine("Hash:       " + item.Hash);
-                        sb.AppendLine("Dimensione: " + item.Size);
-                        sb.AppendLine("----------------------------------------");
+                        // Formato Report Leggibile (Vecchio stile)
+                        sb.AppendLine("========================================");
+                        sb.AppendLine("           HASH FORGE REPORT            ");
+                        sb.AppendLine("========================================");
+                        sb.AppendLine("Data: " + DateTime.Now.ToString());
+                        sb.AppendLine("Totale File: " + results.Count);
+                        sb.AppendLine("========================================");
+                        sb.AppendLine("");
+
+                        foreach (var item in results)
+                        {
+                            sb.AppendLine("File:       " + item.Name);
+                            sb.AppendLine("Percorso:   " + item.Path);
+                            sb.AppendLine("Algoritmo:  " + item.Algorithm);
+                            sb.AppendLine("Hash:       " + item.Hash);
+                            sb.AppendLine("Dimensione: " + item.Size);
+                            sb.AppendLine("----------------------------------------");
+                        }
+                        
+                        sb.AppendLine("");
+                        sb.AppendLine("Generato da Hash Forge");
                     }
-                    
-                    sb.AppendLine("");
-                    sb.AppendLine("Generato da Hash Forge");
+                    else
+                    {
+                        // Formato Standard (hash *filename)
+                        // Compatibile con md5sum, sha1sum, RapidCRC, TeraCopy, ecc.
+                        foreach (var item in results)
+                        {
+                            string relativePath = GetRelativePath(item.Path, exportDir);
+                            sb.AppendLine(string.Format("{0} *{1}", item.Hash, relativePath));
+                        }
+                    }
                     
                     File.WriteAllText(dlg.FileName, sb.ToString(), Encoding.UTF8);
                     MessageBox.Show("Report esportato con successo!", "Successo", MessageBoxButton.OK, MessageBoxImage.Information);
@@ -904,6 +1046,112 @@ namespace HashForge
         private void Maximize_Click(object sender, RoutedEventArgs e)
         {
             WindowState = WindowState == WindowState.Maximized ? WindowState.Normal : WindowState.Maximized;
+        }
+
+
+
+        private void OpenHashList_Click(object sender, RoutedEventArgs e)
+        {
+            HashListOverlay.Visibility = Visibility.Visible;
+            HashListInput.Focus();
+        }
+
+        private void SaveHashList_Click(object sender, RoutedEventArgs e)
+        {
+            string text = HashListInput.Text;
+            _expectedHashes.Clear();
+
+            if (!string.IsNullOrWhiteSpace(text))
+            {
+                // Split semplice per righe
+                var lines = text.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+                foreach (var line in lines)
+                {
+                    string cleanLine = line.Trim();
+                    if (!string.IsNullOrEmpty(cleanLine))
+                    {
+                        // Se la linea contiene spazi (es. "HASH filename"), prendiamo solo la prima parte
+                        // Questo gestisce formati tipo md5sum, sha1sum, ecc.
+                        var parts = cleanLine.Split(new[] { ' ', '\t', '*' }, StringSplitOptions.RemoveEmptyEntries);
+                        if (parts.Length > 0)
+                        {
+                            // Assumiamo che l'hash sia la parte più lunga o la prima parte esadecimale valida
+                            // Per semplicità, prendiamo la prima parte se sembra un hash (solo hex)
+                            // O se non siamo sicuri, prendiamo l'intera riga pulita
+                            string potentialHash = parts[0];
+                            if (System.Text.RegularExpressions.Regex.IsMatch(potentialHash, "^[a-fA-F0-9]+$"))
+                            {
+                                _expectedHashes.Add(potentialHash);
+                            }
+                            else
+                            {
+                                // Fallback: prova a cercare un hash nella riga
+                                var match = System.Text.RegularExpressions.Regex.Match(cleanLine, "[a-fA-F0-9]{32,128}");
+                                if (match.Success)
+                                {
+                                    _expectedHashes.Add(match.Value);
+                                }
+                                else
+                                {
+                                    _expectedHashes.Add(cleanLine);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (_expectedHashes.Count > 0)
+            {
+                ManageHashesBtn.Content = string.Format("✅ {0} Hash Caricati", _expectedHashes.Count);
+                ManageHashesBtn.Background = (Brush)this.Resources["AccentBrush"];
+                ManageHashesBtn.Foreground = (Brush)this.Resources["ButtonForegroundBrush"];
+                ManageHashesBtn.FontWeight = FontWeights.Bold;
+                
+                // Show Status Column
+                if (ResultsGrid != null && ResultsGrid.Columns.Count > 4)
+                {
+                    ResultsGrid.Columns[4].Visibility = Visibility.Visible;
+                }
+            }
+            else
+            {
+                ManageHashesBtn.Content = "Gestisci Hash Attesi";
+                ManageHashesBtn.Background = (Brush)this.Resources["ControlBackgroundBrush"];
+                ManageHashesBtn.Foreground = (Brush)this.Resources["TextBrush"];
+                ManageHashesBtn.FontWeight = FontWeights.Normal;
+                
+                // Hide Status Column
+                if (ResultsGrid != null && ResultsGrid.Columns.Count > 4)
+                {
+                    ResultsGrid.Columns[4].Visibility = Visibility.Collapsed;
+                }
+            }
+
+            HashListOverlay.Visibility = Visibility.Collapsed;
+        }
+
+        private void LoadHashFile_Click(object sender, RoutedEventArgs e)
+        {
+            var dlg = new OpenFileDialog
+            {
+                Filter = "Hash Files (*.txt;*.md5;*.sha1;*.sha256)|*.txt;*.md5;*.sha1;*.sha256|All Files (*.*)|*.*",
+                Title = "Carica File Hash"
+            };
+
+            if (dlg.ShowDialog() == true)
+            {
+                try
+                {
+                    string content = File.ReadAllText(dlg.FileName);
+                    HashListInput.Text = content; // Carica il contenuto grezzo, il parsing avviene al salvataggio
+                    MessageBox.Show("File caricato! Clicca 'Salva e Chiudi' per processare gli hash.", "Info", MessageBoxButton.OK, MessageBoxImage.Information);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("Errore caricamento file: " + ex.Message, "Errore", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+            }
         }
 
 
@@ -965,5 +1213,6 @@ namespace HashForge
         {
             throw new NotImplementedException();
         }
+
     }
 }

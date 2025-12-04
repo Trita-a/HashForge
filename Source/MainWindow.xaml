@@ -7,25 +7,33 @@
         mc:Ignorable="d"
         Title="Hash Forge" Height="700" Width="1120"
         MinWidth="900" MinHeight="600"
-        WindowStyle="None" AllowsTransparency="True" Background="Transparent"
+        WindowStyle="None" Background="{DynamicResource BackgroundBrush}"
         ResizeMode="CanResizeWithGrip"
         WindowStartupLocation="CenterScreen">
 
     <WindowChrome.WindowChrome>
-        <WindowChrome CaptionHeight="40" ResizeBorderThickness="8" GlassFrameThickness="0" CornerRadius="0"/>
+        <WindowChrome CaptionHeight="40" ResizeBorderThickness="8" GlassFrameThickness="1" CornerRadius="0"/>
     </WindowChrome.WindowChrome>
 
     <Window.Resources>
+         <!-- Risorse Colore Tema - Dinamiche -->
          <SolidColorBrush x:Key="BackgroundBrush" Color="#050b16"/>
          <SolidColorBrush x:Key="CardBrush" Color="#111a2b"/>
          <SolidColorBrush x:Key="TextBrush" Color="#f8fafc"/>
+         <SolidColorBrush x:Key="SecondaryTextBrush" Color="#94a3b8"/>
          <SolidColorBrush x:Key="PrimaryBrush" Color="#00c2ff"/>
          <SolidColorBrush x:Key="AccentBrush" Color="#34e0a1"/>
          <SolidColorBrush x:Key="DangerBrush" Color="#ff7b00"/>
+         <SolidColorBrush x:Key="ControlBackgroundBrush" Color="#1e293b"/>
+         <SolidColorBrush x:Key="BorderBrush" Color="#33ffffff"/>
+         <SolidColorBrush x:Key="HoverBrush" Color="#26ffffff"/>
+         <SolidColorBrush x:Key="ButtonForegroundBrush" Color="#0f172a"/>
+         <SolidColorBrush x:Key="WindowControlsBrush" Color="#cbd5e1"/>
+         <SolidColorBrush x:Key="HeaderTextBrush" Color="#ffffff"/>
          
          <Style TargetType="Button">
             <Setter Property="Background" Value="#1e293b"/>
-            <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
             <Setter Property="Padding" Value="16,8"/>
             <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="Template">
@@ -72,13 +80,13 @@
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="bd" Property="Background" Value="#1effffff"/>
+                                <Setter TargetName="bd" Property="Background" Value="{DynamicResource HoverBrush}"/>
                                 <Setter Property="Cursor" Value="Hand"/>
                             </Trigger>
                             <Trigger Property="IsSelected" Value="True">
-                                <Setter TargetName="bd" Property="Background" Value="#2600c2ff"/>
-                                <Setter TargetName="Indicator" Property="Background" Value="{StaticResource PrimaryBrush}"/>
-                                <Setter Property="Foreground" Value="White"/>
+                                <Setter TargetName="bd" Property="Background" Value="{DynamicResource HoverBrush}"/>
+                                <Setter TargetName="Indicator" Property="Background" Value="{DynamicResource PrimaryBrush}"/>
+                                <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
                                 <Setter Property="FontWeight" Value="SemiBold"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
@@ -89,9 +97,9 @@
 
          <!-- ComboBox Style -->
          <Style TargetType="ComboBox">
-            <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
-            <Setter Property="Background" Value="#111a2b"/>
-            <Setter Property="BorderBrush" Value="#33ffffff"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
+            <Setter Property="Background" Value="{DynamicResource ControlBackgroundBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="Padding" Value="12,6"/>
             <Setter Property="Height" Value="34"/>
@@ -132,14 +140,14 @@
                                         </Border>
                                         <ControlTemplate.Triggers>
                                             <Trigger Property="IsMouseOver" Value="true">
-                                                <Setter TargetName="Border" Property="BorderBrush" Value="{StaticResource PrimaryBrush}"/>
-                                                <Setter TargetName="Arrow" Property="Fill" Value="{StaticResource PrimaryBrush}"/>
-                                                <Setter TargetName="Arrow" Property="Stroke" Value="{StaticResource PrimaryBrush}"/>
+                                                <Setter TargetName="Border" Property="BorderBrush" Value="{DynamicResource PrimaryBrush}"/>
+                                                <Setter TargetName="Arrow" Property="Fill" Value="{DynamicResource PrimaryBrush}"/>
+                                                <Setter TargetName="Arrow" Property="Stroke" Value="{DynamicResource PrimaryBrush}"/>
                                                 <Setter Property="Cursor" Value="Hand"/>
                                             </Trigger>
                                             <Trigger Property="IsChecked" Value="true">
-                                                <Setter TargetName="Border" Property="BorderBrush" Value="{StaticResource PrimaryBrush}"/>
-                                                <Setter TargetName="Border" Property="Background" Value="#1e293b"/>
+                                                <Setter TargetName="Border" Property="BorderBrush" Value="{DynamicResource PrimaryBrush}"/>
+                                                <Setter TargetName="Border" Property="Background" Value="{DynamicResource ControlBackgroundBrush}"/>
                                             </Trigger>
                                         </ControlTemplate.Triggers>
                                     </ControlTemplate>
@@ -154,7 +162,7 @@
                                               Margin="12,0,24,0"
                                               VerticalAlignment="Center"
                                               HorizontalAlignment="Left"
-                                              TextElement.Foreground="{StaticResource TextBrush}"/>
+                                              TextElement.Foreground="{DynamicResource TextBrush}"/>
                             
                             <Popup Name="Popup"
                                    Placement="Bottom"
@@ -168,9 +176,9 @@
                                       MinWidth="{TemplateBinding ActualWidth}"
                                       MaxHeight="{TemplateBinding MaxDropDownHeight}">
                                     <Border x:Name="DropDownBorder"
-                                            Background="#1e293b"
+                                            Background="{DynamicResource ControlBackgroundBrush}"
                                             BorderThickness="1"
-                                            BorderBrush="#33ffffff"
+                                            BorderBrush="{DynamicResource BorderBrush}"
                                             CornerRadius="6"
                                             Margin="0,0,8,8">
                                         <Border.Effect>
@@ -212,7 +220,7 @@
                                          <Thumb>
                                              <Thumb.Template>
                                                  <ControlTemplate>
-                                                     <Border Background="#334155" CornerRadius="4">
+                                                     <Border Background="{DynamicResource ControlBackgroundBrush}" CornerRadius="4">
                                                          <Border.Style>
                                                              <Style TargetType="Border">
                                                                  <Style.Triggers>
@@ -268,7 +276,7 @@
          <!-- Window Control Button Styles -->
          <Style x:Key="WindowButtonStyle" TargetType="Button">
              <Setter Property="Background" Value="Transparent"/>
-             <Setter Property="Foreground" Value="#cbd5e1"/>
+             <Setter Property="Foreground" Value="{DynamicResource WindowControlsBrush}"/>
              <Setter Property="Width" Value="46"/>
              <Setter Property="Height" Value="32"/>
              <Setter Property="Template">
@@ -282,8 +290,8 @@
              </Setter>
              <Style.Triggers>
                  <Trigger Property="IsMouseOver" Value="True">
-                     <Setter Property="Background" Value="#26ffffff"/>
-                     <Setter Property="Foreground" Value="White"/>
+                     <Setter Property="Background" Value="{DynamicResource HoverBrush}"/>
+                     <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
                  </Trigger>
              </Style.Triggers>
          </Style>
@@ -299,7 +307,7 @@
          </Style>
     </Window.Resources>
 
-    <Border x:Name="MainBorder" Background="{StaticResource BackgroundBrush}" CornerRadius="12" BorderThickness="1" BorderBrush="#33FFFFFF">
+    <Border x:Name="MainBorder" Background="{DynamicResource BackgroundBrush}">
         <Border.Style>
             <Style TargetType="Border">
                 <Style.Triggers>
@@ -327,11 +335,15 @@
                 
                 <StackPanel Orientation="Horizontal" Margin="16,0">
                     <!-- Logo removed from title bar as requested -->
-                    <TextBlock Text="Hash Forge" Foreground="{StaticResource TextBrush}" 
+                    <TextBlock Text="Hash Forge" Foreground="{DynamicResource TextBrush}" 
                                VerticalAlignment="Center" Margin="0,0,0,0" FontSize="12" FontWeight="SemiBold" Opacity="0.7"/>
                 </StackPanel>
 
                 <StackPanel Grid.Column="2" Orientation="Horizontal" WindowChrome.IsHitTestVisibleInChrome="True">
+                    <!-- Pulsante Cambio Tema -->
+                    <Button x:Name="ThemeBtn" Style="{StaticResource WindowButtonStyle}" ToolTip="Cambia Tema">
+                        <Path x:Name="ThemeIcon" Data="M17.75,4.09L15.22,6.03L16.13,9.09L13.5,7.28L10.87,9.09L11.78,6.03L9.25,4.09L12.44,4L13.5,1L14.56,4L17.75,4.09M21.25,11L19.61,12.25L20.2,14.23L18.5,13.06L16.8,14.23L17.39,12.25L15.75,11L17.81,10.95L18.5,9L19.19,10.95L21.25,11M18.97,15.95C19.8,15.87 20.69,17.05 20.16,17.8C19.84,18.25 19.5,18.67 19.08,19.07C15.17,23 8.84,23 4.94,19.07C1.03,15.17 1.03,8.83 4.94,4.93C5.34,4.53 5.76,4.17 6.21,3.85C6.96,3.32 8.14,4.21 8.06,5.04C7.79,7.9 8.75,10.87 10.95,13.06C13.14,15.26 16.1,16.22 18.97,15.95M17.33,17.97C14.5,17.81 11.7,16.64 9.53,14.5C7.36,12.31 6.2,9.5 6.04,6.68C3.23,9.82 3.34,14.64 6.35,17.66C9.37,20.67 14.19,20.78 17.33,17.97Z" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" Stretch="Uniform" Width="14" Height="14" VerticalAlignment="Center" HorizontalAlignment="Center" SnapsToDevicePixels="True"/>
+                    </Button>
                     <Button x:Name="SettingsBtn" Style="{StaticResource WindowButtonStyle}" ToolTip="Impostazioni">
                         <Path Data="M12,8A4,4 0 0,1 16,12A4,4 0 0,1 12,16A4,4 0 0,1 8,12A4,4 0 0,1 12,8M12,10A2,2 0 0,0 10,12A2,2 0 0,0 12,14A2,2 0 0,0 14,12A2,2 0 0,0 12,10M10,22C9.75,22 9.54,21.82 9.5,21.58L9.13,18.93C8.5,18.68 7.96,18.34 7.44,17.94L4.95,18.95C4.73,19.03 4.46,18.95 4.34,18.73L2.34,15.27C2.21,15.05 2.27,14.78 2.46,14.63L4.56,12.97L4.5,12L4.56,11.03L2.46,9.37C2.27,9.22 2.21,8.95 2.34,8.73L4.34,5.27C4.46,5.05 4.73,4.96 4.95,5.05L7.44,6.05C7.96,5.66 8.5,5.32 9.13,5.07L9.5,2.42C9.54,2.18 9.75,2 10,2H14C14.25,2 14.46,2.18 14.5,2.42L14.87,5.07C15.5,5.32 16.04,5.66 16.56,6.05L19.05,5.05C19.27,4.96 19.54,5.05 19.66,5.27L21.66,8.73C21.79,8.95 21.73,9.22 21.54,9.37L19.44,11.03L19.5,12L19.44,12.97L21.54,14.63C21.73,14.78 21.79,15.05 21.66,15.27L19.66,18.73C19.54,18.95 19.27,19.03 19.05,18.95L16.56,17.94C16.04,18.34 15.5,18.68 14.87,18.93L14.5,21.58C14.46,21.82 14.25,22 14,22H10Z" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" Stretch="Uniform" Width="14" Height="14" VerticalAlignment="Center" HorizontalAlignment="Center" SnapsToDevicePixels="True"/>
                     </Button>
@@ -372,8 +384,8 @@
                             </Image.Effect>
                         </Image>
                         <StackPanel VerticalAlignment="Center">
-                            <TextBlock Text="Hash Forge" FontSize="20" FontWeight="Bold" Foreground="White"/>
-                            <TextBlock Text="Utility per calcolo e validazione di hash (MD5, SHA, ecc.)." Foreground="#94a3b8" FontSize="12"/>
+                            <TextBlock Text="Hash Forge" FontSize="20" FontWeight="Bold" Foreground="{DynamicResource HeaderTextBrush}"/>
+                            <TextBlock Text="Utility per calcolo e validazione di hash (MD5, SHA, ecc.)." Foreground="{DynamicResource SecondaryTextBrush}" FontSize="12"/>
                         </StackPanel>
                     </StackPanel>
                     
@@ -390,7 +402,7 @@
                 </Grid.ColumnDefinitions>
 
                 <!-- Controls Card -->
-                <Border Grid.Column="0" Background="{StaticResource CardBrush}" CornerRadius="16" BorderBrush="#1affffff" BorderThickness="1" Padding="24">
+                <Border Grid.Column="0" Background="{DynamicResource CardBrush}" CornerRadius="16" BorderBrush="#1affffff" BorderThickness="1" Padding="24">
                     <Grid>
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto"/> <!-- Header -->
@@ -410,7 +422,7 @@
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
                             <StackPanel Grid.Column="0">
-                                <TextBlock Text="ALGORITMO" Foreground="#64748b" FontSize="11" Margin="0,0,0,6"/>
+                                <TextBlock Text="ALGORITMO" Foreground="{DynamicResource SecondaryTextBrush}" FontSize="11" Margin="0,0,0,6"/>
                                 <ComboBox x:Name="AlgoCombo" SelectedIndex="3" Padding="8">
                                     <ComboBoxItem Content="MD5"/>
                                     <ComboBoxItem Content="SHA1"/>
@@ -420,8 +432,8 @@
                                 </ComboBox>
                             </StackPanel>
                             <StackPanel Grid.Column="2">
-                                <TextBlock Text="HASH ATTESO (OPZIONALE)" Foreground="#64748b" FontSize="11" Margin="0,0,0,6"/>
-                                <TextBox x:Name="ExpectedHashBox" Padding="8" Height="34" Background="#111a2b" Foreground="#e2e8f0" BorderBrush="#33ffffff" BorderThickness="1" VerticalContentAlignment="Center"/>
+                                <TextBlock Text="CONFRONTO (OPZIONALE)" Foreground="{DynamicResource SecondaryTextBrush}" FontSize="11" Margin="0,0,0,6"/>
+                                <Button x:Name="ManageHashesBtn" Content="Gestisci Hash Attesi" Height="34" Background="{DynamicResource ControlBackgroundBrush}" Foreground="{DynamicResource TextBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" FontSize="12"/>
                             </StackPanel>
                         </Grid>
 
@@ -433,13 +445,13 @@
                                 <ColumnDefinition Width="8"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
-                            <Button x:Name="AddFileBtn" Grid.Column="0" Content="📄 File" Background="{StaticResource PrimaryBrush}" Foreground="#0f172a" FontWeight="Bold" FontSize="13"/>
-                            <Button x:Name="AddFolderBtn" Grid.Column="2" Content="📁 Cartella" Background="{StaticResource PrimaryBrush}" Foreground="#0f172a" FontWeight="Bold" FontSize="13"/>
-                            <Button x:Name="ClearBtn" Grid.Column="4" Content="🗑️ Svuota" Background="{StaticResource DangerBrush}" Foreground="#1a0500" FontWeight="Bold" FontSize="13"/>
+                            <Button x:Name="AddFileBtn" Grid.Column="0" Content="📄 File" Background="{DynamicResource PrimaryBrush}" Foreground="{DynamicResource ButtonForegroundBrush}" FontWeight="Bold" FontSize="13"/>
+                            <Button x:Name="AddFolderBtn" Grid.Column="2" Content="📁 Cartella" Background="{DynamicResource PrimaryBrush}" Foreground="{DynamicResource ButtonForegroundBrush}" FontWeight="Bold" FontSize="13"/>
+                            <Button x:Name="ClearBtn" Grid.Column="4" Content="🗑️ Svuota" Background="{DynamicResource DangerBrush}" Foreground="{DynamicResource ButtonForegroundBrush}" FontWeight="Bold" FontSize="13"/>
                         </Grid>
 
 
-                        <ListBox Grid.Row="3" x:Name="FileList" Background="#0f172a" BorderThickness="0" Foreground="#e2e8f0" Margin="0,0,0,16" AllowDrop="True">
+                        <ListBox Grid.Row="3" x:Name="FileList" Background="{DynamicResource BackgroundBrush}" BorderThickness="0" Foreground="{DynamicResource TextBrush}" Margin="0,0,0,16" AllowDrop="True">
                             <ListBox.ItemTemplate>
                                 <DataTemplate>
                                     <Grid>
@@ -474,10 +486,10 @@
                                     </Setter>
                                     <Style.Triggers>
                                         <Trigger Property="IsMouseOver" Value="True">
-                                            <Setter Property="Background" Value="#1e293b"/>
+                                            <Setter Property="Background" Value="{DynamicResource HoverBrush}"/>
                                         </Trigger>
                                         <Trigger Property="IsSelected" Value="True">
-                                            <Setter Property="Background" Value="#334155"/>
+                                            <Setter Property="Background" Value="{DynamicResource ControlBackgroundBrush}"/>
                                         </Trigger>
                                     </Style.Triggers>
                                 </Style>
@@ -485,13 +497,13 @@
                         </ListBox>
 
 
-                        <Button Grid.Row="4" x:Name="ComputeBtn" Content="⚡ Calcola Hash" Background="{StaticResource AccentBrush}" Foreground="#022c22" FontWeight="Bold" Height="44" FontSize="15">
+                        <Button Grid.Row="4" x:Name="ComputeBtn" Content="⚡ Calcola Hash" Background="{DynamicResource AccentBrush}" Foreground="{DynamicResource ButtonForegroundBrush}" FontWeight="Bold" Height="44" FontSize="15">
                             <Button.Effect>
                                 <DropShadowEffect Color="#34e0a1" BlurRadius="20" Opacity="0.3" ShadowDepth="0"/>
                             </Button.Effect>
                         </Button>
 
-                        <Button Grid.Row="4" x:Name="StopBtn" Content="⛔ Interrompi" Background="{StaticResource DangerBrush}" Foreground="#1a0500" FontWeight="Bold" Height="44" FontSize="15" Visibility="Collapsed">
+                        <Button Grid.Row="4" x:Name="StopBtn" Content="⛔ Interrompi" Background="{DynamicResource DangerBrush}" Foreground="{DynamicResource ButtonForegroundBrush}" FontWeight="Bold" Height="44" FontSize="15" Visibility="Collapsed">
                             <Button.Effect>
                                 <DropShadowEffect Color="#ff7b00" BlurRadius="20" Opacity="0.3" ShadowDepth="0"/>
                             </Button.Effect>
@@ -519,15 +531,15 @@
                             </UniformGrid>
 
                             <!-- Pro Progress Bar -->
-                            <Border Height="10" CornerRadius="5" Background="#1e293b" ClipToBounds="True">
-                                <ProgressBar x:Name="Progress" Background="Transparent" BorderThickness="0" Foreground="{StaticResource PrimaryBrush}" Value="0" Maximum="100"/>
+                            <Border Height="10" CornerRadius="5" Background="{DynamicResource ControlBackgroundBrush}" ClipToBounds="True">
+                                <ProgressBar x:Name="Progress" Background="Transparent" BorderThickness="0" Foreground="{DynamicResource PrimaryBrush}" Value="0" Maximum="100"/>
                             </Border>
                         </StackPanel>
                     </Grid>
                 </Border>
 
                 <!-- Results Card -->
-                <Border Grid.Column="2" Background="{StaticResource CardBrush}" CornerRadius="16" BorderBrush="#1affffff" BorderThickness="1" Padding="24">
+                <Border Grid.Column="2" Background="{DynamicResource CardBrush}" CornerRadius="16" BorderBrush="#1affffff" BorderThickness="1" Padding="24">
                     <Grid>
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto"/>
@@ -536,22 +548,22 @@
                         
                         <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,16">
                             <TextBlock Text="RISULTATI" Foreground="#94a3b8" FontSize="12" FontWeight="Bold" VerticalAlignment="Center"/>
-                            <Button x:Name="CopyBtn" Content="📋 Copia" Margin="16,0,0,0" Padding="12,6" FontSize="12" Background="#26ffffff" BorderBrush="#33ffffff" BorderThickness="1"/>
-                            <Button x:Name="ExportBtn" Content="💾 Esporta TXT" Margin="8,0,0,0" Padding="12,6" FontSize="12" Background="#26ffffff" BorderBrush="#33ffffff" BorderThickness="1"/>
+                            <Button x:Name="CopyBtn" Content="📋 Copia" Margin="16,0,0,0" Padding="12,6" FontSize="12" Background="{DynamicResource HoverBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"/>
+                            <Button x:Name="ExportBtn" Content="💾 Esporta" Margin="8,0,0,0" Padding="12,6" FontSize="12" Background="{DynamicResource HoverBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"/>
                         </StackPanel>
 
                         <DataGrid x:Name="ResultsGrid" Grid.Row="1" Background="Transparent" BorderThickness="0" 
                                   HeadersVisibility="Column" GridLinesVisibility="Horizontal"
                                   AutoGenerateColumns="False" IsReadOnly="True"
-                                  HorizontalGridLinesBrush="#1affffff" RowBackground="Transparent"
-                                  Foreground="#e2e8f0">
+                                  HorizontalGridLinesBrush="{DynamicResource BorderBrush}" RowBackground="Transparent"
+                                  Foreground="{DynamicResource TextBrush}">
                             <DataGrid.Resources>
                                 <Style TargetType="DataGridColumnHeader">
                                     <Setter Property="Background" Value="Transparent"/>
-                                    <Setter Property="Foreground" Value="#94a3b8"/>
+                                    <Setter Property="Foreground" Value="{DynamicResource SecondaryTextBrush}"/>
                                     <Setter Property="Padding" Value="8"/>
                                     <Setter Property="BorderThickness" Value="0,0,0,1"/>
-                                    <Setter Property="BorderBrush" Value="#1affffff"/>
+                                    <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
                                 </Style>
                                 <Style TargetType="DataGridCell">
                                     <Setter Property="Padding" Value="8"/>
@@ -569,7 +581,7 @@
                                     <Style.Triggers>
                                         <Trigger Property="IsSelected" Value="True">
                                             <Setter Property="Background" Value="Transparent"/>
-                                            <Setter Property="Foreground" Value="White"/>
+                                            <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
                                             <Setter Property="BorderThickness" Value="0"/>
                                         </Trigger>
                                     </Style.Triggers>
@@ -591,11 +603,11 @@
                                                 </Border>
                                                 <ControlTemplate.Triggers>
                                                     <Trigger Property="IsMouseOver" Value="True">
-                                                        <Setter TargetName="DGR_Border" Property="Background" Value="#1e293b"/>
+                                                        <Setter TargetName="DGR_Border" Property="Background" Value="{DynamicResource HoverBrush}"/>
                                                     </Trigger>
                                                     <Trigger Property="IsSelected" Value="True">
-                                                        <Setter TargetName="DGR_Border" Property="Background" Value="#334155"/>
-                                                        <Setter Property="Foreground" Value="White"/>
+                                                        <Setter TargetName="DGR_Border" Property="Background" Value="{DynamicResource ControlBackgroundBrush}"/>
+                                                        <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
                                                     </Trigger>
                                                 </ControlTemplate.Triggers>
                                             </ControlTemplate>
@@ -604,16 +616,35 @@
                                 </Style>
                             </DataGrid.Resources>
                             <DataGrid.Columns>
-                                <DataGridTextColumn Header="FILE" Binding="{Binding Name}" Width="2*" Foreground="White"/>
-                                <DataGridTextColumn Header="ALGORITMO" Binding="{Binding Algorithm}" Width="Auto" Foreground="#94a3b8"/>
-                                <DataGridTextColumn Header="HASH" Binding="{Binding Hash}" Width="3*" Foreground="#cbd5e1">
+                                <DataGridTextColumn Header="FILE" Binding="{Binding Name}" Width="2*">
                                     <DataGridTextColumn.ElementStyle>
                                         <Style TargetType="TextBlock">
-                                            <Setter Property="FontFamily" Value="Consolas"/>
+                                            <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
                                         </Style>
                                     </DataGridTextColumn.ElementStyle>
                                 </DataGridTextColumn>
-                                <DataGridTextColumn Header="DIMENSIONE" Binding="{Binding Size}" Width="Auto" Foreground="#94a3b8"/>
+                                <DataGridTextColumn Header="ALGORITMO" Binding="{Binding Algorithm}" Width="Auto">
+                                    <DataGridTextColumn.ElementStyle>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Foreground" Value="{DynamicResource SecondaryTextBrush}"/>
+                                        </Style>
+                                    </DataGridTextColumn.ElementStyle>
+                                </DataGridTextColumn>
+                                <DataGridTextColumn Header="HASH" Binding="{Binding Hash}" Width="3*">
+                                    <DataGridTextColumn.ElementStyle>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="FontFamily" Value="Consolas"/>
+                                            <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
+                                        </Style>
+                                    </DataGridTextColumn.ElementStyle>
+                                </DataGridTextColumn>
+                                <DataGridTextColumn Header="DIMENSIONE" Binding="{Binding Size}" Width="Auto">
+                                    <DataGridTextColumn.ElementStyle>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Foreground" Value="{DynamicResource SecondaryTextBrush}"/>
+                                        </Style>
+                                    </DataGridTextColumn.ElementStyle>
+                                </DataGridTextColumn>
                                 
                                 <!-- Status Column -->
                                 <DataGridTemplateColumn x:Name="StatusColumn" Header="STATUS" Width="Auto" Visibility="Collapsed">
@@ -646,13 +677,13 @@
             </Grid>
 
             <!-- Status Bar -->
-            <Border Grid.Row="3" Background="#0f172a" BorderThickness="0,1,0,0" BorderBrush="#1affffff">
-                <TextBlock x:Name="StatusBarText" Text="Pronto" Foreground="#64748b" VerticalAlignment="Center" Margin="16,0" FontSize="12"/>
+            <Border Grid.Row="3" Background="{DynamicResource BackgroundBrush}" BorderThickness="0,1,0,0" BorderBrush="{DynamicResource BorderBrush}">
+                <TextBlock x:Name="StatusBarText" Text="Pronto" Foreground="{DynamicResource SecondaryTextBrush}" VerticalAlignment="Center" Margin="16,0" FontSize="12"/>
             </Border>
 
             <!-- Settings Modal Overlay -->
             <Grid x:Name="SettingsOverlay" Grid.RowSpan="4" Background="#AA000000" Visibility="Collapsed" Panel.ZIndex="1000">
-                <Border Width="400" Height="350" Background="#1e293b" CornerRadius="12" BorderBrush="#33ffffff" BorderThickness="1" VerticalAlignment="Center" HorizontalAlignment="Center">
+                <Border Width="400" Height="350" Background="{DynamicResource CardBrush}" CornerRadius="12" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" VerticalAlignment="Center" HorizontalAlignment="Center">
                     <Grid Margin="24">
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto"/>
@@ -661,12 +692,12 @@
                         </Grid.RowDefinitions>
                         
                         <!-- Header -->
-                        <TextBlock Text="Impostazioni" FontSize="20" FontWeight="Bold" Foreground="White" Margin="0,0,0,24"/>
+                        <TextBlock Text="Impostazioni" FontSize="20" FontWeight="Bold" Foreground="{DynamicResource HeaderTextBrush}" Margin="0,0,0,24"/>
                         
                         <!-- Content -->
                         <StackPanel Grid.Row="1">
                             <!-- Default Algo -->
-                            <TextBlock Text="Algoritmo Predefinito" Foreground="#94a3b8" FontSize="12" Margin="0,0,0,8"/>
+                            <TextBlock Text="Algoritmo Predefinito" Foreground="{DynamicResource SecondaryTextBrush}" FontSize="12" Margin="0,0,0,8"/>
                             <ComboBox x:Name="SettingsAlgoCombo" Padding="8" Margin="0,0,0,24">
                                 <ComboBoxItem Content="MD5"/>
                                 <ComboBoxItem Content="SHA1"/>
@@ -675,16 +706,59 @@
                             </ComboBox>
 
                             <!-- Shell Integration -->
-                            <TextBlock Text="Integrazione Windows" Foreground="#94a3b8" FontSize="12" Margin="0,0,0,8"/>
-                            <TextBlock Text="Aggiungi 'Hash Forge' al menu tasto destro" Foreground="#64748b" FontSize="11" Margin="0,0,0,12" TextWrapping="Wrap"/>
-                            <Button x:Name="ToggleContextBtn" Content="Aggiungi al Menu Contestuale" Height="36" Background="#334155" Foreground="White" BorderThickness="0"/>
+                            <TextBlock Text="Integrazione Windows" Foreground="{DynamicResource SecondaryTextBrush}" FontSize="12" Margin="0,0,0,8"/>
+                            <TextBlock Text="Aggiungi 'Hash Forge' al menu tasto destro" Foreground="{DynamicResource SecondaryTextBrush}" FontSize="11" Margin="0,0,0,12" TextWrapping="Wrap"/>
+                            <Button x:Name="ToggleContextBtn" Content="Aggiungi al Menu Contestuale" Height="36" Background="{DynamicResource ControlBackgroundBrush}" Foreground="{DynamicResource TextBrush}" BorderThickness="0"/>
                             <TextBlock x:Name="ContextStatusText" Text="" Foreground="#4ade80" FontSize="11" Margin="0,8,0,0" HorizontalAlignment="Center"/>
                         </StackPanel>
 
                         <!-- Footer -->
                         <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,24,0,0">
-                            <Button x:Name="CloseSettingsBtn" Content="Chiudi" Width="100" Height="36" Background="{StaticResource PrimaryBrush}" Foreground="#0f172a" FontWeight="Bold"/>
+                            <Button x:Name="CloseSettingsBtn" Content="Chiudi" Width="100" Height="36" Background="{DynamicResource PrimaryBrush}" Foreground="{DynamicResource ButtonForegroundBrush}" FontWeight="Bold"/>
                         </StackPanel>
+                    </Grid>
+                </Border>
+            </Grid>
+
+            <!-- Hash List Overlay -->
+            <Grid x:Name="HashListOverlay" Grid.RowSpan="4" Background="#AA000000" Visibility="Collapsed" Panel.ZIndex="1000">
+                <Border Width="500" Height="450" Background="{DynamicResource CardBrush}" CornerRadius="12" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" VerticalAlignment="Center" HorizontalAlignment="Center">
+                    <Grid Margin="24">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+                        
+                        <!-- Header -->
+                        <StackPanel Grid.Row="0">
+                            <TextBlock Text="Lista Hash Attesi" FontSize="20" FontWeight="Bold" Foreground="{DynamicResource HeaderTextBrush}" Margin="0,0,0,8"/>
+                            <TextBlock Text="Incolla qui gli hash (uno per riga) o carica un file di hash (.txt, .md5, .sha256...)" Foreground="{DynamicResource SecondaryTextBrush}" FontSize="12" Margin="0,0,0,16" TextWrapping="Wrap"/>
+                        </StackPanel>
+                        
+                        <!-- Content -->
+                        <TextBox x:Name="HashListInput" Grid.Row="1" AcceptsReturn="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" 
+                                 Background="{DynamicResource ControlBackgroundBrush}" Foreground="{DynamicResource TextBrush}" 
+                                 BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" Padding="8" FontFamily="Consolas"/>
+
+                        <!-- Footer -->
+                        <Grid Grid.Row="2" Margin="0,16,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            
+                            <StackPanel Orientation="Horizontal" Grid.Column="0">
+                                <Button x:Name="LoadHashFileBtn" Content="📂 Carica File" Padding="12,8" Margin="0,0,8,0" Background="{DynamicResource ControlBackgroundBrush}" Foreground="{DynamicResource TextBrush}" BorderThickness="0"/>
+                                <Button x:Name="ClearHashListBtn" Content="🗑️ Pulisci" Padding="12,8" Background="{DynamicResource DangerBrush}" Foreground="{DynamicResource ButtonForegroundBrush}" FontWeight="Bold" BorderThickness="0"/>
+                            </StackPanel>
+                            
+                            <StackPanel Orientation="Horizontal" Grid.Column="2">
+                                <Button x:Name="CancelHashListBtn" Content="Annulla" Padding="12,8" Margin="0,0,8,0" Background="Transparent" Foreground="{DynamicResource SecondaryTextBrush}" BorderThickness="0"/>
+                                <Button x:Name="SaveHashListBtn" Content="Salva e Chiudi" Padding="16,8" Background="{DynamicResource PrimaryBrush}" Foreground="{DynamicResource ButtonForegroundBrush}" FontWeight="Bold" BorderThickness="0"/>
+                            </StackPanel>
+                        </Grid>
                     </Grid>
                 </Border>
             </Grid>
