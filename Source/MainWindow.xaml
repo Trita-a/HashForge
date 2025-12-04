@@ -384,7 +384,10 @@
                             </Image.Effect>
                         </Image>
                         <StackPanel VerticalAlignment="Center">
-                            <TextBlock Text="Hash Forge" FontSize="20" FontWeight="Bold" Foreground="{DynamicResource HeaderTextBrush}"/>
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="Hash Forge" FontSize="20" FontWeight="Bold" Foreground="{DynamicResource HeaderTextBrush}"/>
+                                <TextBlock Text="v1.1.0" FontSize="12" Foreground="{DynamicResource PrimaryBrush}" VerticalAlignment="Center" Margin="8,0,0,0" FontWeight="SemiBold"/>
+                            </StackPanel>
                             <TextBlock Text="Utility per calcolo e validazione di hash (MD5, SHA, ecc.)." Foreground="{DynamicResource SecondaryTextBrush}" FontSize="12"/>
                         </StackPanel>
                     </StackPanel>
@@ -678,7 +681,14 @@
 
             <!-- Status Bar -->
             <Border Grid.Row="3" Background="{DynamicResource BackgroundBrush}" BorderThickness="0,1,0,0" BorderBrush="{DynamicResource BorderBrush}">
-                <TextBlock x:Name="StatusBarText" Text="Pronto" Foreground="{DynamicResource SecondaryTextBrush}" VerticalAlignment="Center" Margin="16,0" FontSize="12"/>
+                <Grid Margin="16,0">
+                    <TextBlock x:Name="StatusBarText" Text="Pronto" Foreground="{DynamicResource SecondaryTextBrush}" VerticalAlignment="Center" FontSize="12" HorizontalAlignment="Left"/>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                        <TextBlock Text="William Tritapepe" Foreground="{DynamicResource SecondaryTextBrush}" FontSize="11" Opacity="0.7"/>
+                        <TextBlock Text=" • " Foreground="{DynamicResource SecondaryTextBrush}" FontSize="11" Opacity="0.5"/>
+                        <TextBlock x:Name="GitHubLink" Text="GitHub" Foreground="{DynamicResource PrimaryBrush}" FontSize="11" Cursor="Hand" TextDecorations="Underline"/>
+                    </StackPanel>
+                </Grid>
             </Border>
 
             <!-- Settings Modal Overlay -->
