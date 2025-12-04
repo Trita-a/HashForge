@@ -1,0 +1,13 @@
+  Individuazione dei progetti da ripristinare...
+  Tutti i progetti sono aggiornati per il ripristino.
+C:\Program Files\dotnet\sdk\8.0.416\Microsoft.Common.CurrentVersion.targets(888,5): warning MSB3539: The value of the property "BaseIntermediateOutputPath" was modified after it was used by MSBuild which can lead to unexpected build results. Tools such as NuGet will write outputs to the path specified by the "MSBuildProjectExtensionsPath" instead. To set this property, you must do so before Microsoft.Common.props is imported, for example by using Directory.Build.props.  For more information, please visit https://go.microsoft.com/fwlink/?linkid=869650 [C:\Users\Forensic_Dell\Desktop\HashForge\cd\csharp_version\Source\HashForge.csproj]
+C:\Users\Forensic_Dell\Desktop\HashForge\cd\csharp_version\Source\HashForge.cs(1164,22): error CS0111: Il tipo 'MainWindow' definisce già un membro denominato 'Close_Click' con gli stessi tipi di parametro [C:\Users\Forensic_Dell\Desktop\HashForge\cd\csharp_version\Source\HashForge_kas2o5f3_wpftmp.csproj]
+
+Compilazione NON RIUSCITA.
+
+C:\Program Files\dotnet\sdk\8.0.416\Microsoft.Common.CurrentVersion.targets(888,5): warning MSB3539: The value of the property "BaseIntermediateOutputPath" was modified after it was used by MSBuild which can lead to unexpected build results. Tools such as NuGet will write outputs to the path specified by the "MSBuildProjectExtensionsPath" instead. To set this property, you must do so before Microsoft.Common.props is imported, for example by using Directory.Build.props.  For more information, please visit https://go.microsoft.com/fwlink/?linkid=869650 [C:\Users\Forensic_Dell\Desktop\HashForge\cd\csharp_version\Source\HashForge.csproj]
+C:\Users\Forensic_Dell\Desktop\HashForge\cd\csharp_version\Source\HashForge.cs(1164,22): error CS0111: Il tipo 'MainWindow' definisce già un membro denominato 'Close_Click' con gli stessi tipi di parametro [C:\Users\Forensic_Dell\Desktop\HashForge\cd\csharp_version\Source\HashForge_kas2o5f3_wpftmp.csproj]
+    Avvisi: 1
+    Errori: 1
+
+Tempo trascorso 00:00:01.10

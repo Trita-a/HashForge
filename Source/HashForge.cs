@@ -380,6 +380,11 @@ namespace HashForge
             Application.Current.Shutdown();
         }
 
+        private void Close_Click(object sender, RoutedEventArgs e)
+        {
+            this.Close();
+        }
+
         private void OpenSettings()
         {
             if (SettingsOverlay != null)
@@ -1154,12 +1159,6 @@ namespace HashForge
             }
         }
 
-
-
-        private void Close_Click(object sender, RoutedEventArgs e)
-        {
-            Close();
-        }
     }
 
     public class HashResult
