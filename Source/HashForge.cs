@@ -887,13 +887,13 @@ namespace HashForge
                                 foreach (var kvp in hashers)
                                 {
                                     string algoName = kvp.Key;
-                                    string hash = BitConverter.ToString(kvp.Value.Hash).Replace("-", "").ToLowerInvariant();
+                                    string hash = BitConverter.ToString(kvp.Value.Hash).Replace("-", "").ToUpperInvariant();
 
-                                    // Check for match
+                                    // Check for match (case-insensitive)
                                     bool? matchStatus = null;
                                     if (_expectedHashes != null && _expectedHashes.Count > 0)
                                     {
-                                        matchStatus = _expectedHashes.Contains(hash);
+                                        matchStatus = _expectedHashes.Any(h => h.Equals(hash, StringComparison.OrdinalIgnoreCase));
                                     }
 
                                     // Final report for this file+algorithm with result
@@ -1085,71 +1085,91 @@ namespace HashForge
         }
 
         private void Export_Click(object sender, RoutedEventArgs e)
+{
+    if (results.Count == 0)
+    {
+        MessageBox.Show("Nessun risultato da esportare.", "Info", MessageBoxButton.OK, MessageBoxImage.Information);
+        return;
+    }
+
+    var dlg = new SaveFileDialog 
+    { 
+        Filter = "Text File (*.txt)|*.txt|MD5 File (*.md5)|*.md5|SHA1 File (*.sha1)|*.sha1|SHA256 File (*.sha256)|*.sha256|All Files (*.*)|*.*",
+        FileName = "hash_report.txt" 
+    };
+
+    if (dlg.ShowDialog() == true)
+    {
+        try
         {
-            if (results.Count == 0)
-            {
-                MessageBox.Show("Nessun risultato da esportare.", "Info", MessageBoxButton.OK, MessageBoxImage.Information);
-                return;
-            }
+            var sb = new StringBuilder();
+            string ext = System.IO.Path.GetExtension(dlg.FileName).ToLower();
+            string exportDir = System.IO.Path.GetDirectoryName(dlg.FileName);
 
-            var dlg = new SaveFileDialog 
-            { 
-                Filter = "Text File (*.txt)|*.txt|MD5 File (*.md5)|*.md5|SHA1 File (*.sha1)|*.sha1|SHA256 File (*.sha256)|*.sha256|All Files (*.*)|*.*",
-                FileName = "hash_report.txt" 
-            };
+            // Group results by file path
+            var groupedByFile = results.GroupBy(r => r.Path).ToList();
 
-            if (dlg.ShowDialog() == true)
+            if (ext == ".txt")
             {
-                try
+                // Formato Report Raggruppato per File
+                sb.AppendLine("========================================");
+                sb.AppendLine("           HASH FORGE REPORT            ");
+                sb.AppendLine("========================================");
+                sb.AppendLine("Data: " + DateTime.Now.ToString());
+                sb.AppendLine("Totale File: " + groupedByFile.Count);
+                sb.AppendLine("Totale Hash: " + results.Count);
+                sb.AppendLine("========================================");
+                sb.AppendLine("");
+
+                foreach (var fileGroup in groupedByFile)
                 {
-                    var sb = new StringBuilder();
-                    string ext = System.IO.Path.GetExtension(dlg.FileName).ToLower();
-                    string exportDir = System.IO.Path.GetDirectoryName(dlg.FileName);
-
-                    if (ext == ".txt")
+                    var first = fileGroup.First();
+                    sb.AppendLine("File:       " + first.Name);
+                    sb.AppendLine("Percorso:   " + first.Path);
+                    sb.AppendLine("Dimensione: " + first.Size);
+                    sb.AppendLine("");
+                    
+                    foreach (var item in fileGroup)
                     {
-                        // Formato Report Leggibile (Vecchio stile)
-                        sb.AppendLine("========================================");
-                        sb.AppendLine("           HASH FORGE REPORT            ");
-                        sb.AppendLine("========================================");
-                        sb.AppendLine("Data: " + DateTime.Now.ToString());
-                        sb.AppendLine("Totale File: " + results.Count);
-                        sb.AppendLine("========================================");
-                        sb.AppendLine("");
-
-                        foreach (var item in results)
-                        {
-                            sb.AppendLine("File:       " + item.Name);
-                            sb.AppendLine("Percorso:   " + item.Path);
-                            sb.AppendLine("Algoritmo:  " + item.Algorithm);
-                            sb.AppendLine("Hash:       " + item.Hash);
-                            sb.AppendLine("Dimensione: " + item.Size);
-                            sb.AppendLine("----------------------------------------");
-                        }
-                        
-                        sb.AppendLine("");
-                        sb.AppendLine("Generato da Hash Forge");
+                        sb.AppendLine(string.Format("  {0,-8}: {1}", item.Algorithm, item.Hash));
                     }
-                    else
+                    sb.AppendLine("----------------------------------------");
+                }
+                
+                sb.AppendLine("");
+                sb.AppendLine("Generato da Hash Forge v1.2.0");
+            }
+            else
+            {
+                // Formato Standard (hash *filename) - raggruppato per file
+                // Compatibile con md5sum, sha1sum, RapidCRC, TeraCopy, ecc.
+                foreach (var fileGroup in groupedByFile)
+                {
+                    var first = fileGroup.First();
+                    string relativePath = GetRelativePath(first.Path, exportDir);
+                    
+                    // Se ci sono più algoritmi, aggiungi commento
+                    if (fileGroup.Count() > 1)
                     {
-                        // Formato Standard (hash *filename)
-                        // Compatibile con md5sum, sha1sum, RapidCRC, TeraCopy, ecc.
-                        foreach (var item in results)
-                        {
-                            string relativePath = GetRelativePath(item.Path, exportDir);
-                            sb.AppendLine(string.Format("{0} *{1}", item.Hash, relativePath));
-                        }
+                        sb.AppendLine("; " + relativePath);
                     }
                     
-                    File.WriteAllText(dlg.FileName, sb.ToString(), Encoding.UTF8);
-                    MessageBox.Show("Report esportato con successo!", "Successo", MessageBoxButton.OK, MessageBoxImage.Information);
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show("Errore durante l'esportazione: " + ex.Message, "Errore", MessageBoxButton.OK, MessageBoxImage.Error);
+                    foreach (var item in fileGroup)
+                    {
+                        sb.AppendLine(string.Format("{0} *{1}", item.Hash, relativePath));
+                    }
                 }
             }
+            
+            File.WriteAllText(dlg.FileName, sb.ToString(), Encoding.UTF8);
+            MessageBox.Show("Report esportato con successo!", "Successo", MessageBoxButton.OK, MessageBoxImage.Information);
         }
+        catch (Exception ex)
+        {
+            MessageBox.Show("Errore durante l'esportazione: " + ex.Message, "Errore", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+    }
+}
         private void Minimize_Click(object sender, RoutedEventArgs e)
         {
             WindowState = WindowState.Minimized;
