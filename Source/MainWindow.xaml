@@ -55,6 +55,40 @@
             </Setter>
          </Style>
 
+         <!-- Algorithm Toggle Button Style (Pill) -->
+         <Style x:Key="AlgoToggleStyle" TargetType="ToggleButton">
+            <Setter Property="Background" Value="{DynamicResource ControlBackgroundBrush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource SecondaryTextBrush}"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="12,6"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ToggleButton">
+                        <Border x:Name="Bd" 
+                                Background="{TemplateBinding Background}" 
+                                CornerRadius="4"
+                                Padding="{TemplateBinding Padding}"
+                                BorderThickness="1"
+                                BorderBrush="Transparent">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="{DynamicResource PrimaryBrush}"/>
+                                <Setter Property="Foreground" Value="{DynamicResource ButtonForegroundBrush}"/>
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource PrimaryBrush}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+         </Style>
+
          <!-- ComboBox Item Style -->
          <Style TargetType="ComboBoxItem">
             <Setter Property="SnapsToDevicePixels" Value="True"/>
@@ -374,11 +408,8 @@
                     </Grid.ColumnDefinitions>
                     
                     <StackPanel VerticalAlignment="Center" Margin="24,0" Orientation="Horizontal">
-                        <!-- Logo Image with forced high-quality decoding -->
-                        <Image Width="32" Height="32" Margin="0,0,16,0" VerticalAlignment="Center" RenderOptions.BitmapScalingMode="HighQuality">
-                            <Image.Source>
-                                <BitmapImage UriSource="icon.png" CacheOption="OnLoad"/>
-                            </Image.Source>
+                        <!-- Logo Image - loaded programmatically from embedded resource -->
+                        <Image x:Name="LogoImage" Width="32" Height="32" Margin="0,0,16,0" VerticalAlignment="Center" RenderOptions.BitmapScalingMode="HighQuality">
                             <Image.Effect>
                                 <DropShadowEffect Color="#00c2ff" BlurRadius="10" Opacity="0.4" ShadowDepth="0"/>
                             </Image.Effect>
@@ -386,7 +417,7 @@
                         <StackPanel VerticalAlignment="Center">
                             <StackPanel Orientation="Horizontal">
                                 <TextBlock Text="Hash Forge" FontSize="20" FontWeight="Bold" Foreground="{DynamicResource HeaderTextBrush}"/>
-                                <TextBlock Text="v1.1.0" FontSize="12" Foreground="{DynamicResource PrimaryBrush}" VerticalAlignment="Center" Margin="8,0,0,0" FontWeight="SemiBold"/>
+                                <TextBlock Text="v1.2.0" FontSize="12" Foreground="{DynamicResource PrimaryBrush}" VerticalAlignment="Center" Margin="8,0,0,0" FontWeight="SemiBold"/>
                             </StackPanel>
                             <TextBlock Text="Utility per calcolo e validazione di hash (MD5, SHA, ecc.)." Foreground="{DynamicResource SecondaryTextBrush}" FontSize="12"/>
                         </StackPanel>
@@ -418,27 +449,46 @@
 
                         <TextBlock Grid.Row="0" Text="CONTROLLI" Foreground="#94a3b8" FontSize="12" FontWeight="Bold" Margin="0,0,0,16"/>
                         
-                        <Grid Grid.Row="1" Margin="0,0,0,16">
+                        <!-- Controls Row -->
+                        <Grid Grid.Row="1" Margin="0,0,0,12">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="12"/>
+                                <ColumnDefinition Width="8"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
-                            <StackPanel Grid.Column="0">
-                                <TextBlock Text="ALGORITMO" Foreground="{DynamicResource SecondaryTextBrush}" FontSize="11" Margin="0,0,0,6"/>
-                                <ComboBox x:Name="AlgoCombo" SelectedIndex="3" Padding="8">
-                                    <ComboBoxItem Content="MD5"/>
-                                    <ComboBoxItem Content="SHA1"/>
-                                    <ComboBoxItem Content="SHA224"/>
-                                    <ComboBoxItem Content="SHA256"/>
-                                    <ComboBoxItem Content="SHA512"/>
-                                </ComboBox>
-                            </StackPanel>
-                            <StackPanel Grid.Column="2">
-                                <TextBlock Text="CONFRONTO (OPZIONALE)" Foreground="{DynamicResource SecondaryTextBrush}" FontSize="11" Margin="0,0,0,6"/>
-                                <Button x:Name="ManageHashesBtn" Content="Gestisci Hash Attesi" Height="34" Background="{DynamicResource ControlBackgroundBrush}" Foreground="{DynamicResource TextBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" FontSize="12"/>
-                            </StackPanel>
+                            
+                            <!-- Algorithm Selector Button with Badge -->
+                            <Grid Grid.Column="0">
+                                <Button x:Name="AlgoSelectorBtn" Height="34" Background="{DynamicResource ControlBackgroundBrush}" Foreground="{DynamicResource TextBrush}" FontSize="12" Content="⚙️ Algoritmi"/>
+                                <!-- Notification Badge -->
+                                <Border Background="#22c55e" CornerRadius="8" Padding="5,1" 
+                                        HorizontalAlignment="Right" VerticalAlignment="Top" 
+                                        Margin="0,-6,-6,0" MinWidth="16">
+                                    <TextBlock x:Name="AlgoStatusText" Text="1" Foreground="White" FontSize="10" FontWeight="Bold" HorizontalAlignment="Center"/>
+                                </Border>
+                            </Grid>
+                            
+                            <!-- Hash Verification Button -->
+                            <Button x:Name="ManageHashesBtn" Grid.Column="2" Content="📋 Verifica Hash" Height="34" Background="{DynamicResource ControlBackgroundBrush}" Foreground="{DynamicResource TextBrush}" FontSize="12"/>
                         </Grid>
+                        
+                        <!-- Algorithm Selection Popup -->
+                        <Popup x:Name="AlgoPopup" Placement="Bottom" PlacementTarget="{Binding ElementName=AlgoSelectorBtn}" StaysOpen="False" AllowsTransparency="True">
+                            <Border Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="6" Padding="8" Margin="0,4,0,0">
+                                <Border.Effect>
+                                    <DropShadowEffect Color="Black" BlurRadius="10" Opacity="0.3" ShadowDepth="4"/>
+                                </Border.Effect>
+                                <StackPanel>
+                                    <TextBlock Text="Seleziona Algoritmi" Foreground="{DynamicResource SecondaryTextBrush}" FontSize="11" Margin="4,0,0,8"/>
+                                    <StackPanel Orientation="Horizontal">
+                                        <ToggleButton x:Name="ChkMD5" Content="MD5" Style="{StaticResource AlgoToggleStyle}" Margin="0,0,4,0"/>
+                                        <ToggleButton x:Name="ChkSHA1" Content="SHA1" Style="{StaticResource AlgoToggleStyle}" Margin="0,0,4,0"/>
+                                        <ToggleButton x:Name="ChkSHA256" Content="SHA256" Style="{StaticResource AlgoToggleStyle}" IsChecked="True" Margin="0,0,4,0"/>
+                                        <ToggleButton x:Name="ChkSHA512" Content="SHA512" Style="{StaticResource AlgoToggleStyle}"/>
+                                    </StackPanel>
+                                </StackPanel>
+                            </Border>
+                        </Popup>
 
                         <Grid Grid.Row="2" Margin="0,0,0,16">
                             <Grid.ColumnDefinitions>

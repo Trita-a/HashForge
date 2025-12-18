@@ -1,6 +1,7 @@
 # Build results
 Artifacts/
 Build/
+tools/
 [Bb]in/
 [Oo]bj/
 

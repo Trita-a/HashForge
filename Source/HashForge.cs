@@ -153,7 +153,7 @@ namespace HashForge
     {
         // UI Controls
         private ListBox FileList;
-        private ComboBox AlgoCombo;
+        private System.Windows.Controls.Primitives.ToggleButton ChkMD5, ChkSHA1, ChkSHA256, ChkSHA512;
         private Button ComputeBtn;
         private ProgressBar Progress;
         private TextBlock StatFiles, StatData, StatSpeed, StatETA;
@@ -168,6 +168,10 @@ namespace HashForge
         private TextBlock ContextStatusText;
         // Hash List Controls
         private Button ManageHashesBtn;
+        // Algorithm Selection Popup
+        private Button AlgoSelectorBtn;
+        private System.Windows.Controls.Primitives.Popup AlgoPopup;
+        private TextBlock AlgoStatusText;
         private Grid HashListOverlay;
         private TextBox HashListInput;
         private Button LoadHashFileBtn, ClearHashListBtn, CancelHashListBtn, SaveHashListBtn;
@@ -239,7 +243,27 @@ namespace HashForge
 
                 // Find Controls
                 FileList = (ListBox)loadedWindow.FindName("FileList");
-                AlgoCombo = (ComboBox)loadedWindow.FindName("AlgoCombo");
+                ChkMD5 = (System.Windows.Controls.Primitives.ToggleButton)loadedWindow.FindName("ChkMD5");
+                ChkSHA1 = (System.Windows.Controls.Primitives.ToggleButton)loadedWindow.FindName("ChkSHA1");
+                ChkSHA256 = (System.Windows.Controls.Primitives.ToggleButton)loadedWindow.FindName("ChkSHA256");
+                ChkSHA512 = (System.Windows.Controls.Primitives.ToggleButton)loadedWindow.FindName("ChkSHA512");
+
+                // Algorithm Popup Controls
+                AlgoSelectorBtn = (Button)loadedWindow.FindName("AlgoSelectorBtn");
+                AlgoPopup = (System.Windows.Controls.Primitives.Popup)loadedWindow.FindName("AlgoPopup");
+                AlgoStatusText = (TextBlock)loadedWindow.FindName("AlgoStatusText");
+
+                // Setup Algorithm Selector button to open popup
+                if (AlgoSelectorBtn != null && AlgoPopup != null)
+                {
+                    AlgoSelectorBtn.Click += (s, ev) => { AlgoPopup.IsOpen = !AlgoPopup.IsOpen; };
+                }
+
+                // Update status text when toggles change
+                if (ChkMD5 != null) ChkMD5.Click += (s, ev) => UpdateAlgoStatusText();
+                if (ChkSHA1 != null) ChkSHA1.Click += (s, ev) => UpdateAlgoStatusText();
+                if (ChkSHA256 != null) ChkSHA256.Click += (s, ev) => UpdateAlgoStatusText();
+                if (ChkSHA512 != null) ChkSHA512.Click += (s, ev) => UpdateAlgoStatusText();
 
                 if (ManageHashesBtn != null)
                 {
@@ -290,6 +314,29 @@ namespace HashForge
                 if (gitHubLink != null)
                 {
                     gitHubLink.MouseLeftButtonUp += (s, e) => System.Diagnostics.Process.Start("https://github.com/Trita-a/HashForge");
+                }
+
+                // Load Logo Image from embedded resource
+                var logoImage = (Image)loadedWindow.FindName("LogoImage");
+                if (logoImage != null)
+                {
+                    try
+                    {
+                        using (var stream = assembly.GetManifestResourceStream("HashForge.icon.png"))
+                        {
+                            if (stream != null)
+                            {
+                                var bitmap = new System.Windows.Media.Imaging.BitmapImage();
+                                bitmap.BeginInit();
+                                bitmap.StreamSource = stream;
+                                bitmap.CacheOption = System.Windows.Media.Imaging.BitmapCacheOption.OnLoad;
+                                bitmap.EndInit();
+                                bitmap.Freeze();
+                                logoImage.Source = bitmap;
+                            }
+                        }
+                    }
+                    catch { }
                 }
 
                 // Verify critical controls were found
@@ -385,7 +432,11 @@ namespace HashForge
             {
                 _cancellationTokenSource.Cancel();
             }
-            Application.Current.Shutdown();
+            if (Application.Current != null)
+            {
+                Application.Current.Shutdown();
+            }
+            Environment.Exit(0);
         }
 
         private void Close_Click(object sender, RoutedEventArgs e)
@@ -431,20 +482,33 @@ namespace HashForge
         
         private void ApplySettings()
         {
-            // Set Algo Combo
-            if (AlgoCombo != null)
-            {
-                foreach (ComboBoxItem item in AlgoCombo.Items)
-                {
-                    if (item.Content.ToString() == _currentSettings.DefaultAlgorithm)
-                    {
-                        AlgoCombo.SelectedItem = item;
-                        break;
-                    }
-                }
-            }
+            // Set default algorithm checkbox
+            if (ChkSHA256 != null && _currentSettings.DefaultAlgorithm == "SHA256")
+                ChkSHA256.IsChecked = true;
+            else if (ChkMD5 != null && _currentSettings.DefaultAlgorithm == "MD5")
+                ChkMD5.IsChecked = true;
+            else if (ChkSHA1 != null && _currentSettings.DefaultAlgorithm == "SHA1")
+                ChkSHA1.IsChecked = true;
+            else if (ChkSHA512 != null && _currentSettings.DefaultAlgorithm == "SHA512")
+                ChkSHA512.IsChecked = true;
         }
 
+        private List<string> GetSelectedAlgorithms()
+        {
+            var algorithms = new List<string>();
+            if (ChkMD5 != null && ChkMD5.IsChecked == true) algorithms.Add("MD5");
+            if (ChkSHA1 != null && ChkSHA1.IsChecked == true) algorithms.Add("SHA1");
+            if (ChkSHA256 != null && ChkSHA256.IsChecked == true) algorithms.Add("SHA256");
+            if (ChkSHA512 != null && ChkSHA512.IsChecked == true) algorithms.Add("SHA512");
+            return algorithms;
+        }
+
+        private void UpdateAlgoStatusText()
+        {
+            if (AlgoStatusText == null) return;
+            var count = GetSelectedAlgorithms().Count;
+            AlgoStatusText.Text = count.ToString();
+        }
 
 
         private void UpdateContextStatus()
@@ -655,8 +719,16 @@ namespace HashForge
             if (StatsPanel != null) StatsPanel.Visibility = Visibility.Visible;
             if (StatusBarText != null) StatusBarText.Text = "Enumerazione file in corso...";
 
-            var algoItem = AlgoCombo.SelectedItem as ComboBoxItem;
-            var algoName = algoItem != null ? algoItem.Content.ToString() : "SHA256";
+            var selectedAlgorithms = GetSelectedAlgorithms();
+            if (selectedAlgorithms.Count == 0)
+            {
+                MessageBox.Show("Seleziona almeno un algoritmo di hash!", "Attenzione", MessageBoxButton.OK, MessageBoxImage.Warning);
+                isComputing = false;
+                ComputeBtn.Visibility = Visibility.Visible;
+                if (StopBtn != null) StopBtn.Visibility = Visibility.Collapsed;
+                if (StatsPanel != null) StatsPanel.Visibility = Visibility.Collapsed;
+                return;
+            }
             var files = new List<string>();
 
             try
@@ -734,17 +806,24 @@ namespace HashForge
                     int currentFile = 0;
                     long processedBytes = 0;
 
-                    using (var hasher = CreateHasher(algoName))
+                    foreach (var file in files)
                     {
-                        foreach (var file in files)
+                        if (token.IsCancellationRequested) break;
+
+                        try
                         {
-                            if (token.IsCancellationRequested) break;
+                            long fileSize = new FileInfo(file).Length;
+                            
+                            // Create all hashers for selected algorithms
+                            var hashers = new Dictionary<string, HashAlgorithm>();
+                            foreach (var algoName in selectedAlgorithms)
+                            {
+                                hashers[algoName] = CreateHasher(algoName);
+                                hashers[algoName].Initialize();
+                            }
 
                             try
                             {
-                                long fileSize = new FileInfo(file).Length;
-                                string hash = "";
-
                                 using (var stream = File.OpenRead(file))
                                 {
                                     // Buffer size: 4MB chunks for optimal performance/feedback balance
@@ -752,29 +831,29 @@ namespace HashForge
                                     int bytesRead;
                                     long fileProcessed = 0;
 
-                                    // Initialize hasher for incremental processing
-                                    hasher.Initialize();
-
                                     while ((bytesRead = stream.Read(buffer, 0, buffer.Length)) > 0)
                                     {
                                         if (token.IsCancellationRequested) break;
 
-                                        // Process chunk
-                                        if (fileProcessed + bytesRead < fileSize)
+                                        // Process chunk for ALL hashers simultaneously
+                                        bool isLastBlock = (fileProcessed + bytesRead >= fileSize);
+                                        
+                                        foreach (var kvp in hashers)
                                         {
-                                            hasher.TransformBlock(buffer, 0, bytesRead, buffer, 0);
-                                        }
-                                        else
-                                        {
-                                            // Last block
-                                            hasher.TransformFinalBlock(buffer, 0, bytesRead);
-                                            hash = BitConverter.ToString(hasher.Hash).Replace("-", "").ToLowerInvariant();
+                                            if (!isLastBlock)
+                                            {
+                                                kvp.Value.TransformBlock(buffer, 0, bytesRead, buffer, 0);
+                                            }
+                                            else
+                                            {
+                                                kvp.Value.TransformFinalBlock(buffer, 0, bytesRead);
+                                            }
                                         }
 
                                         fileProcessed += bytesRead;
                                         processedBytes += bytesRead;
 
-                                        // Update stats every chunk (or throttle if needed)
+                                        // Update stats every chunk
                                         var elapsed = (DateTime.Now - startTime).TotalSeconds;
                                         var speed = elapsed > 0 ? processedBytes / elapsed : 0;
                                         var remaining = totalBytes - processedBytes;
@@ -803,41 +882,57 @@ namespace HashForge
                                 if (token.IsCancellationRequested) break;
 
                                 currentFile++;
-                                
-                                // Check for match
-                                bool? matchStatus = null;
-                                
-                                // Se abbiamo una lista caricata, usiamo quella
-                                if (_expectedHashes != null && _expectedHashes.Count > 0)
-                                {
-                                    matchStatus = _expectedHashes.Contains(hash);
-                                }
 
-                                // Final report for this file with result
-                                ((IProgress<ProgressReport>)progress).Report(new ProgressReport
+                                // Report results for each algorithm
+                                foreach (var kvp in hashers)
                                 {
-                                    Result = new HashResult
+                                    string algoName = kvp.Key;
+                                    string hash = BitConverter.ToString(kvp.Value.Hash).Replace("-", "").ToLowerInvariant();
+
+                                    // Check for match
+                                    bool? matchStatus = null;
+                                    if (_expectedHashes != null && _expectedHashes.Count > 0)
                                     {
-                                        Name = System.IO.Path.GetFileName(file),
-                                        Path = file,
-                                        Algorithm = algoName,
-                                        Hash = hash,
-                                        Size = FormatSize(fileSize),
-                                        MatchStatus = matchStatus
-                                    },
-                                    ProgressPercentage = totalBytes > 0 ? (double)processedBytes / totalBytes * 100 : 0,
-                                    StatusText = null, // Not used anymore
-                                    FilesText = string.Format("{0}/{1}", currentFile, files.Count),
-                                    DataText = string.Format("{0}/{1}", FormatSize(processedBytes), FormatSize(totalBytes)),
-                                    SpeedText = "-",
-                                    ETAText = "Completato"
-                                });
+                                        matchStatus = _expectedHashes.Contains(hash);
+                                    }
+
+                                    // Final report for this file+algorithm with result
+                                    ((IProgress<ProgressReport>)progress).Report(new ProgressReport
+                                    {
+                                        Result = new HashResult
+                                        {
+                                            Name = System.IO.Path.GetFileName(file),
+                                            Path = file,
+                                            Algorithm = algoName,
+                                            Hash = hash,
+                                            Size = FormatSize(fileSize),
+                                            MatchStatus = matchStatus
+                                        },
+                                        ProgressPercentage = totalBytes > 0 ? (double)processedBytes / totalBytes * 100 : 0,
+                                        StatusText = null,
+                                        FilesText = string.Format("{0}/{1}", currentFile, files.Count),
+                                        DataText = string.Format("{0}/{1}", FormatSize(processedBytes), FormatSize(totalBytes)),
+                                        SpeedText = "-",
+                                        ETAText = "Completato"
+                                    });
+                                }
                             }
-                            catch (Exception ex)
+                            finally
                             {
-                                currentFile++;
-                                
-                                // Report error
+                                // Dispose all hashers
+                                foreach (var hasher in hashers.Values)
+                                {
+                                    hasher.Dispose();
+                                }
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            currentFile++;
+
+                            // Report error for each selected algorithm
+                            foreach (var algoName in selectedAlgorithms)
+                            {
                                 ((IProgress<ProgressReport>)progress).Report(new ProgressReport
                                 {
                                     Result = new HashResult
@@ -950,7 +1045,8 @@ namespace HashForge
         // Context Menu Handlers
         private void CopyHash_Click(object sender, RoutedEventArgs e)
         {
-            if (ResultsGrid.SelectedItem is HashResult result)
+            var result = ResultsGrid.SelectedItem as HashResult;
+            if (result != null)
             {
                 Clipboard.SetText(result.Hash);
             }
@@ -958,7 +1054,8 @@ namespace HashForge
 
         private void CopyPath_Click(object sender, RoutedEventArgs e)
         {
-            if (ResultsGrid.SelectedItem is HashResult result)
+            var result = ResultsGrid.SelectedItem as HashResult;
+            if (result != null)
             {
                 Clipboard.SetText(result.Path);
             }
@@ -966,7 +1063,8 @@ namespace HashForge
 
         private void OpenFolder_Click(object sender, RoutedEventArgs e)
         {
-            if (ResultsGrid.SelectedItem is HashResult result)
+            var result = ResultsGrid.SelectedItem as HashResult;
+            if (result != null)
             {
                 try
                 {
