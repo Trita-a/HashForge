@@ -1076,11 +1076,23 @@ namespace HashForge
 
         private void Copy_Click(object sender, RoutedEventArgs e)
         {
-            var item = ResultsGrid.SelectedItem as HashResult;
-            if (item != null && !item.Hash.StartsWith("ERRORE"))
+            if (ResultsGrid.SelectedItem is HashResult hr)
             {
-                Clipboard.SetText(item.Hash);
-                if (StatusBarText != null) StatusBarText.Text = "Hash copiato negli appunti!";
+                // Copia TUTTI gli hash calcolati per quel file
+                var sb = new StringBuilder();
+        
+                sb.AppendLine($"File: {hr.FileName}");
+                if (!string.IsNullOrEmpty(hr.MD5)) sb.AppendLine($"MD5: {hr.MD5}");
+                if (!string.IsNullOrEmpty(hr.SHA1)) sb.AppendLine($"SHA1: {hr.SHA1}");
+                if (!string.IsNullOrEmpty(hr.SHA256)) sb.AppendLine($"SHA256: {hr.SHA256}");
+                if (!string.IsNullOrEmpty(hr.SHA512)) sb.AppendLine($"SHA512: {hr.SHA512}");
+        
+                Clipboard.SetText(sb.ToString());
+                StatusBarText.Text = "Copiato negli appunti";
+            }
+            else
+            {
+                StatusBarText.Text = "Nessuna riga selezionata";
             }
         }
 
