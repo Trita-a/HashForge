@@ -1,0 +1,29 @@
+name: Windows Build
+
+on:
+  pull_request: {}
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup NuGet
+        uses: NuGet/setup-nuget@v1
+
+      - name: Restore NuGet packages
+        run: nuget restore "Source/HashForge.csproj"
+
+      - name: Build with MSBuild
+        run: msbuild "Source/HashForge.csproj" /p:Configuration=Release
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: HashForge
+          path: "Source/bin/Release"
