@@ -1045,20 +1045,26 @@ namespace HashForge
         // Context Menu Handlers
         private void CopyHash_Click(object sender, RoutedEventArgs e)
         {
-            var result = ResultsGrid.SelectedItem as HashResult;
-            if (result != null)
+            if (ResultsGrid.SelectedItems.Count == 0) return;
+            var sb = new StringBuilder();
+            foreach (var item in ResultsGrid.SelectedItems)
             {
-                Clipboard.SetText(result.Hash);
+                var result = item as HashResult;
+                if (result != null) sb.AppendLine(result.Hash);
             }
+            Clipboard.SetText(sb.ToString().TrimEnd());
         }
 
         private void CopyPath_Click(object sender, RoutedEventArgs e)
         {
-            var result = ResultsGrid.SelectedItem as HashResult;
-            if (result != null)
+            if (ResultsGrid.SelectedItems.Count == 0) return;
+            var sb = new StringBuilder();
+            foreach (var item in ResultsGrid.SelectedItems)
             {
-                Clipboard.SetText(result.Path);
+                var result = item as HashResult;
+                if (result != null) sb.AppendLine(result.Path);
             }
+            Clipboard.SetText(sb.ToString().TrimEnd());
         }
 
         private void OpenFolder_Click(object sender, RoutedEventArgs e)
@@ -1076,12 +1082,31 @@ namespace HashForge
 
         private void Copy_Click(object sender, RoutedEventArgs e)
         {
-            var item = ResultsGrid.SelectedItem as HashResult;
-            if (item != null && !item.Hash.StartsWith("ERRORE"))
+            if (ResultsGrid.SelectedItems.Count == 0 && results.Count == 0) return;
+
+            var sb = new StringBuilder();
+            // If nothing selected, copy all results
+            var items = ResultsGrid.SelectedItems.Count > 0 
+                ? ResultsGrid.SelectedItems.Cast<HashResult>() 
+                : results.AsEnumerable();
+
+            var grouped = items.Where(r => r != null && !r.Hash.StartsWith("ERRORE")).GroupBy(r => r.Path).ToList();
+
+            foreach (var fileGroup in grouped)
             {
-                Clipboard.SetText(item.Hash);
-                if (StatusBarText != null) StatusBarText.Text = "Hash copiato negli appunti!";
+                var first = fileGroup.First();
+                sb.AppendLine("File:       " + first.Name);
+                sb.AppendLine("Percorso:   " + first.Path);
+                sb.AppendLine("Dimensione: " + first.Size);
+                foreach (var item in fileGroup)
+                {
+                    sb.AppendLine(string.Format("  {0,-8}: {1}", item.Algorithm, item.Hash));
+                }
+                sb.AppendLine("────────────────────────────────────────");
             }
+
+            Clipboard.SetText(sb.ToString().TrimEnd());
+            if (StatusBarText != null) StatusBarText.Text = "Risultati copiati negli appunti!";
         }
 
         private void Export_Click(object sender, RoutedEventArgs e)
@@ -1137,7 +1162,7 @@ namespace HashForge
                 }
                 
                 sb.AppendLine("");
-                sb.AppendLine("Generato da Hash Forge v1.2.0");
+                sb.AppendLine("Generato da Hash Forge v1.3.0");
             }
             else
             {
